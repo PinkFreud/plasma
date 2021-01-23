@@ -10,7 +10,6 @@ from datetime import datetime
 from optparse import OptionParser
 
 # Application Defaults
-PIPE_FILE = "/tmp/plasma"
 PATTERNS = "/etc/plasma/"
 FPS = 30
 LIGHTS = 10
@@ -71,12 +70,12 @@ def main():
         daemon='background' if opts.daemonize else 'foreground',
         fps=opts.fps))
 
-    log("Plasma input pipe: {}".format(PIPE_FILE))
+    log("Plasma input pipe: {}".format(opts.pipe))
 
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    with FIFO(PIPE_FILE) as fifo:
+    with FIFO(opts.pipe) as fifo:
         r, g, b = 0, 0, 0
         pattern, pattern_w, pattern_h, pattern_meta = load_pattern("default")
         alpha = pattern_meta['alpha']
@@ -148,6 +147,8 @@ def options():
                       help="set number of lights in your plasma chain")
     parser.add_option("-o", "--device", default="GPIO:15:14",
                       help="set output device, default is GPIO, BCM15 = Data, BCM14 = Clock")
+    parser.add_option("-p", "--pipe", default="/tmp/plasma",
+                      help="set pipe used for client process communication, default /tmp/plasma")
     return parser.parse_args()[0]
 
 

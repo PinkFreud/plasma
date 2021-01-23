@@ -1,8 +1,28 @@
 #!/bin/bash
 
 if [ "$1" == "--help" ] || [ "$1" == "" ]; then
-	echo -e "\nUsage:\n    $0 <r> <g> <b> - Display an RGB colour (all values 0-255)\n    $0 <image name> - Display an image-based animation from /etc/plasma\n    $0 fps <fps> - Set the update framerate\n    $0 --install <filename> - Install an animation file\n    $0 --list - List available animations\n"
+	cat <<__EOF__
+
+Usage:
+    $0 [-p|--pipe] <r> <g> <b> - Display an RGB colour (all values 0-255)
+    $0 [-p|--pipe] <image name> - Display an image-based animation
+    from /etc/plasma
+    $0 [-p|--pipe] fps <fps> - Set the update framerate
+    $0 --install <filename> - Install an animation file
+    $0 --list - List available animations
+
+FIFO specification:
+    $0 -p|--pipe /path/to/pipe <cmd>
+      - Communicate with plasma daemon via FIFO /path/to/pipe
+__EOF__
 	exit 0
+fi
+
+pipe=/tmp/plasma
+if [ "$1" == "-p" -o "$1" == "--pipe" ]; then
+  pipe="$2"
+  shift 2
+  echo "Set FIFO path to $pipe"
 fi
 
 if [ "$1" == "--list" ]; then
@@ -24,8 +44,8 @@ if [ "$1" == "--install" ]; then
 	fi
 fi
 
-if [ -p "/tmp/plasma" ]; then
-	echo "$@" > /tmp/plasma
+if [ -p "$pipe" ]; then
+	echo "$@" > "$pipe"
 else
-	echo -e "\n/tmp/plasma not found.\nPlasma daemon not running?\n"
+	echo -e "\n${pipe} not found.\nPlasma daemon not running?\n"
 fi

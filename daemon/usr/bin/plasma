@@ -6,6 +6,7 @@ import signal
 import os
 import sys
 import threading
+import re
 from datetime import datetime
 from optparse import OptionParser
 
@@ -15,10 +16,12 @@ FPS = 30
 LIGHTS = 10
 DEBUG = False
 
-# Log & PID files
-PID_FILE = "/var/run/plasma.pid"
-LOG_FILE = "/var/log/plasma.log"
-ERR_FILE = "/var/log/plasma.err"
+# Log & PID files - we're moving these to main(), so they can reflect the fifo name
+FIFO_FILE = ""
+PID_FILE = ""
+LOG_FILE = ""
+ERR_FILE = ""
+
 
 
 stopped = threading.Event()
@@ -57,7 +60,25 @@ class FIFO():
 
 
 def main():
+    global FIFO_FILE
+    global PID_FILE
+    global LOG_FILE
+    global ERR_FILE
+
     opts = options()
+
+    pipename = re.sub(r'^.*/', '', opts.pipe)
+    if (pipename == "plasma"):
+      FIFO_FILE = "/tmp/plasma"
+      PID_FILE = "/var/run/plasma.pid"
+      LOG_FILE = "/var/log/plasma.log"
+      ERR_FILE = "/var/log/plasma.err"
+    else:
+      FIFO_FILE = "/tmp/plasma-{}".format(pipename)
+      PID_FILE = "/var/run/plasma-{}.pid".format(pipename)
+      LOG_FILE = "/var/log/plasma-{}.log".format(pipename)
+      ERR_FILE = "/var/log/plasma-{}.err".format(pipename)
+    log("Plasma input pipe: {}".format(FIFO_FILE))
 
     if opts.daemonize:
         fork()
@@ -70,12 +91,10 @@ def main():
         daemon='background' if opts.daemonize else 'foreground',
         fps=opts.fps))
 
-    log("Plasma input pipe: {}".format(opts.pipe))
-
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    with FIFO(opts.pipe) as fifo:
+    with FIFO(FIFO_FILE) as fifo:
         r, g, b = 0, 0, 0
         pattern, pattern_w, pattern_h, pattern_meta = load_pattern("default")
         alpha = pattern_meta['alpha']
@@ -147,8 +166,8 @@ def options():
                       help="set number of lights in your plasma chain")
     parser.add_option("-o", "--device", default="GPIO:15:14",
                       help="set output device, default is GPIO, BCM15 = Data, BCM14 = Clock")
-    parser.add_option("-p", "--pipe", default="/tmp/plasma",
-                      help="set pipe used for client process communication, default /tmp/plasma")
+    parser.add_option("-p", "--pipe", default="plasma",
+                      help="set pipe used for client process communication, default plasma to create pipe /tmp/plasma. Also sets logfile and pidfile names.")
     return parser.parse_args()[0]
 
 

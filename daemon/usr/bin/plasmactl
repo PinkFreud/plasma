@@ -4,10 +4,10 @@ if [ "$1" == "--help" ] || [ "$1" == "" ]; then
 	cat <<__EOF__
 
 Usage:
-    $0 [-p|--pipe] <r> <g> <b> - Display an RGB colour (all values 0-255)
-    $0 [-p|--pipe] <image name> - Display an image-based animation
+    $0 [-p|--pipe PATH] <r> <g> <b> - Display an RGB colour (all values 0-255)
+    $0 [-p|--pipe PATH] <image name> - Display an image-based animation
     from /etc/plasma
-    $0 [-p|--pipe] fps <fps> - Set the update framerate
+    $0 [-p|--pipe PATH] fps <fps> - Set the update framerate
     $0 --install <filename> - Install an animation file
     $0 --list - List available animations
 
